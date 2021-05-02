@@ -7,7 +7,7 @@
 ## 3. Schaefer function now greps sigma.R as defined 
 ## 4. Observation error implemented as CV (log.sd of CPUE)
 ## 5. Implemented Kobe prototype with terminal F/Fmsy taken as mean of previous 3 yrs.
-## 6. Added save.plot option from CMSY
+## 6. Added save.plot option from CMSY 
 ## 7. Added automatic package installer
 ## Additions by Gianpaolo Coro:
 ## 1. improved estimate of prior kq  
