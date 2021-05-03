@@ -7,10 +7,10 @@
 ## 3. Schaefer function now greps sigma.R as defined 
 ## 4. Observation error implemented as CV (log.sd of CPUE)
 ## 5. Implemented Kobe prototype with terminal F/Fmsy taken as mean of previous 3 yrs.
-## 6. Added save.plot option from CMSY 
-## 7. Added automatic package installer 
+## 6. Added save.plot option from CMSY
+## 7. Added automatic package installer
 ## Additions by Gianpaolo Coro:
-## 1. improved estimate of prior kq
+## 1. improved estimate of prior kq  
 ## 2. retrospective analysis
 ## Addition by RF: MVN
 ##---------------------------------------------------------------------------------------------
@@ -36,16 +36,16 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path)) # set working direct
 #-----------------------------------------
 # Required settings, File names 
 #-----------------------------------------
- id_file     <- "EU_Stocks_ID_8.csv" #   name of file containing stock-specific info and settings for the analysis
+ id_file     <- "EU_Stocks_ID_8-2.csv" #"FirstAss_ID_4.csv"  # "SimCPUE_ID_8.csv" # "CMSY_ID_11.csv" #   name of file containing stock-specific info and settings for the analysis
  outfile     <- paste("Out_",format(Sys.Date(),format="%B%d%Y_"),id_file,sep="") # default name for output file
 
  #----------------------------------------
 # Select stock to be analyzed ----
 #----------------------------------------
-# stocks      <-NA
+stocks      <-NA
 # If the input files contain more than one stock, specify below the stock to be analyzed
 # If the line below is commented out (#), all stocks in the input file will be analyzed
- stocks <- #"DIPL.ANN"   #"HL_VL"   #c("anb-78ab")  # c("HH_VL","HL_VL","HLH_VL","LH_VL","LHL_VL","LL_VL") # "anb-78ab"  #c("HL_H","HL_M","HL_L","HL_VL")  #"HH_L"  #"LHL_L"  #"Micr_pou_AD" #"Myxine glutinosa"   #"Eut_gurn_Balt"  # "rjc.27.3a47d"  #"PNSK"   # "Ille_coi_AD" # "WSTM"
+ stocks <- "ple-2123"   #"HL_VL"   #c("anb-78ab")  # c("HH_VL","HL_VL","HLH_VL","LH_VL","LHL_VL","LL_VL") # "anb-78ab"  #c("HL_H","HL_M","HL_L","HL_VL")  #"HH_L"  #"LHL_L"  #"Micr_pou_AD" #"Myxine glutinosa"   #"Eut_gurn_Balt"  # "rjc.27.3a47d"  #"PNSK"   # "Ille_coi_AD" # "WSTM"
 
  # Read data
  cinfo        <- read.csv(id_file, header=T, dec=".", stringsAsFactors = FALSE)
@@ -59,17 +59,17 @@ filter       <- TRUE # set to TRUE for Monte Carlo filtering; if FALSE, incease 
 cor.log.rk   <- -0.607 #-0.871 # empirical value of log r-k correlation in 140 stocks analyzed with BSM
 sigma.r      <- c(0.05,0.07,0.1,0.15) # very low, low, medium, high # overall process error for productivity or r
 sigma.cpue   <- 0.3 # observation error for cpue 
-n.p          <- 500 # number of r-kq pairs to be analysed; will be doubled if too few viable pairs are found # LO CAMBIE ORIGINA ERA 50000
-n.trial      <- 3 # times each year is calculated with new random error terms for r and cpue # LO CAMBIE ORIGINA ERA 30
+n.p          <- 500 # number of r-kq pairs to be analysed; will be doubled if too few viable pairs are found I CHANGED THIS FROM 5K TO 5C
+n.trial      <- 30 # times each year is calculated with new random error terms for r and cpue
 min.viable   <- 20 # minimum number of viable r-kq pairs to be accepted for analysis
 max.viable   <- 5000 # maximum number of viable r-kq pairs to reduce processing time; set to 20000 if filter==FALSE
 creep.graph  <- F # plot graph for effort creep correction, if used
 do.plots     <- T # retrospective analysis does not work if FALSE
-write.output <- T # set to TRUE if table with results in output file is wanted 
-kobe.plot    <- F # HW set to TRUE so produce additional kobe status plot 
-save.plots   <- T # set to TRUE to save graphs to JPEG files
-close.plots  <- T # set to TRUE to close on-screen plots, to avoid "too many open devices" error in batch-processing;
-retros       <- F # retrospective analysis, requires do.plots <- TRUE
+write.output <- F # set to TRUE if table with results in output file is wanted I CHANGED THIS TO F
+kobe.plot    <- T # HW set to TRUE so produce additional kobe status plot 
+save.plots   <- F # set to TRUE to save graphs to JPEG files #  TO AVOID ERRORS ON MAC, NOT TO SAVE PLOTS AND SAVE THEM LATER 
+close.plots  <- F # set to TRUE to close on-screen plots, to avoid "too many open devices" error in batch-processing; I CHANGED THIS TO F
+retros       <- T # retrospective analysis, requires do.plots <- TRUE
 
 #----------------------------------------------
 #  FUNCTIONS ----
@@ -321,9 +321,11 @@ for(stock in stocks) {
     }
     if(creep.graph==TRUE) {
       #windows(8,6)
+      png('test.png', width=5, height=5, units='px', type='cairo', antialias=NULL)
       plot(x=yr,y=cpue.raw,ylim=c(0,max(cpue.raw)),type="l",bty="l",xlab="Year",ylab="CPUE")
       lines(x=yr,y=cpue.cor,col="red")
       text(x=yr[length(yr)/2],y=max(cpue.raw),paste(stock," CPUE corrected for effort creep of ",e.creep," %",sep=""),col="red")
+      dev.off()
     }
     cpue.raw <- cpue.cor
   }
@@ -456,8 +458,9 @@ for(stock in stocks) {
   if(do.plots==T) {
   
   # check for operating system, open separate window for graphs if Windows
-  if(grepl("win",tolower(Sys.info()['sysname']))) {X11(14,9)}
-  
+  #if(grepl("win",tolower(Sys.info()['sysname']))) {windows(14,9)}
+    #png('test2.png', width=5, height=5, units='px', type='cairo', antialias=NULL)
+    #X11()
   par(mfrow=c(2,3))
   # (a): plot CPUE with prior for CPUEmsy
   plot(x=yr, y=cpue, 
@@ -746,7 +749,9 @@ for(stock in stocks) {
   
   if(kobe.plot==T){
     # open window for plot of four panels
-    if(grepl("win",tolower(Sys.info()['sysname']))) {windows(7,7)}
+    #if(grepl("win",tolower(Sys.info()['sysname']))) {windows(7,7)}
+    #png('test3.png', width=5, height=5, units='px', type='cairo', antialias=NULL)
+    #X11()
     par(mfrow=c(1,1))  
     # make margins narrower
     par(mar=c(4.1,4.1,2.1,2.1))
@@ -841,7 +846,8 @@ for(stock in stocks) {
 #retrospective analysis plots
 if (retros.nyears>0 && do.plots==T){
 
-  if(grepl("win",tolower(Sys.info()['sysname']))) {windows(12,7)}
+ # if(grepl("win",tolower(Sys.info()['sysname']))) {windows(12,7)}
+  #png('test4.png', width=5, height=5, units='px', type='cairo', antialias=NULL)
     par(mfrow=c(1,2))  
   
 	allyears<-years.retrospective[[1]]
@@ -904,5 +910,5 @@ if (retros.nyears>0 && do.plots==T){
 	} # end of regular output
 
 } # end loop on stocks
- 
+
 
